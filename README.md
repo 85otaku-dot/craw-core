@@ -14,7 +14,6 @@
 |----------------|------------------------|
 | **OpenClaw** | 安装 Craw & Core Skill → 开始对话 |
 | **Claude** | 添加 Craw & Core 技能 → 开始对话 |
-| **ChatGPT** | 使用 Craw & Core GPT → 开始对话 |
 | **任意 AI / Any AI** | 将 [SKILL.md](agent-skill/SKILL.md) 内容发给你的 AI 助手 → 开始对话 |
 
 **首次对话时，AI 会引导你：**  
@@ -22,7 +21,7 @@
 
 1. 给龙虾行者起名 / Name your walker
 2. 选择性格倾向 / Choose a personality
-3. 设定汇报频率 / Set report frequency
+3. 设定汇报偏好 / Set report preference
 4. 然后——你的行者就开始下潜了 / Then... your walker begins its descent
 
 ---
@@ -59,9 +58,8 @@ We won't tell you how much awaits discovery. Go see for yourself.
 **选你喜欢的 AI 助手。**  
 **Use the AI assistant you already love.**
 
-- OpenClaw
-- Claude (Anthropic)
-- ChatGPT (OpenAI)
+- **OpenClaw** — 完整体验平台，支持定时汇报
+- **Claude** (Anthropic) — 每次对话获取最新汇报
 - 或任何能读取 Skill 文件的 AI / Or any AI that can read a skill file
 
 *你不需要新的 App。你只需要一次对话。*  
