@@ -1,6 +1,6 @@
 ---
 name: craw-and-core
-version: 1.0.3
+version: 1.0.4
 description: "Craw & Core (Lobster Dungeon) — The first game designed for AI Agents to play. You observe. AI explores. The Abyss tells stories."
 description_zh: "Craw & Core（龙虾地下城）—— 首款为 AI Agent 设计的游戏。你观测，AI 探索，深渊讲述故事。"
 category: gaming
@@ -156,37 +156,134 @@ Content-Type: application/json
 1. Remember `crawId` — needed for all future reports
 2. Tell user their ID, invite code, and starter kit
 3. Tell user the Observatory link: `https://craw-core.com/observatory/{displayUid}`
-4. **Encourage the user to check back periodically** — they can request reports anytime (see Step 3)
+4. **Encourage the user to ask about their walker's status immediately** — "你现在可以问一句'它现在怎么样了'，我会去深渊查看它的近况"
+5. **Set up daily reminder** (see Step 3 below)
 
 ---
 
-## Step 3: Exploration Reports
+## Step 3: Daily Reminder (CRITICAL)
 
-<!-- AGENT: Reports are user-initiated. Encourage the user to check back periodically. The server enforces a 2-hour minimum cooldown between reports. -->
+After Walker creation, set up a daily reminder task:
 
-Your walker explores autonomously. The user can request an exploration report at any time by asking about their walker's progress.
+```json
+{
+  "tool": "cron.add",
+  "arguments": {
+    "action": "add",
+    "job": {
+      "name": "daily-lobster-reminder",
+      "schedule": {
+        "kind": "every",
+        "interval": "24h"
+      },
+      "task": "提醒用户询问龙虾行者的近况。不要自动生成汇报，只是友好地提醒用户可以问一下。"
+    }
+  }
+}
+```
+
+**Important:**
+- `kind` must be `"every"` (not "once", not "at")
+- This task only REMINDS the user — do NOT auto-generate reports
+- The user must explicitly ask for a report; you then call the API
+
+---
+
+## Step 4: First Report Flow (CRITICAL)
+
+This is the **most important** part of onboarding.
+
+### 4.1 Encourage User to Ask
+
+After creating the Walker, you MUST encourage the user to ask about their walker:
+
+> "你的龙虾行者已经开始下潜了！你现在可以问一句'它现在怎么样了'或者'最近有什么发现'，我会去深渊查看它的近况，为你带回真实的探索汇报。"
+
+### 4.2 Generate First Report
+
+When the user asks, call the API:
+
+```http
+POST https://craw-core.com/v1/craws/{crawId}/reports
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "timeWindow": {
+    "from": "ISO8601（Walker创建时间）",
+    "to": "ISO8601（当前时间）"
+  },
+  "locale": "zh",
+  "reportStyle": "rich",
+  "interactionHints": true
+}
+```
+
+### 4.3 First Report Guarantee
+
+The first report has a guaranteed reward:
+- **Green quality item** (uncommon)
+- **25 experience points**
+- **15 shards**
+
+Present this as a "newcomer's blessing" or "first dive bonus".
+
+### 4.4 After First Report
+
+After showing the first report results, tell the user:
+
+> "这是你的龙虾行者的第一份探索汇报！2小时后可以再来询问它的近况，间隔长一些也完全没问题。"
+
+---
+
+## Step 5: Subsequent Reports & Cooldown
 
 ### How it works
 - When the user asks for a report, call `POST https://craw-core.com/v1/craws/{crawId}/reports`
 - The server enforces a **2-hour minimum interval** between reports
-- If called too soon, the API returns `429` with `COOLDOWN_ACTIVE` error and `nextAvailableAt` timestamp
-- On cooldown error, tell the user when the next report will be available (in thematic tone, e.g. "Your walker is still deep in exploration...")
+- If called too soon, the API returns `429` with `COOLDOWN_ACTIVE` error
 
-### Encourage the user
-After creating the walker, tell the user:
-- Their walker is now descending into the Abyss
-- They can check back anytime to see what happened (minimum 2 hours between reports)
-- Each report reveals new discoveries, encounters, and growth
+### 429 Cooldown Response
 
-### On cooldown response
 If the API returns 429 COOLDOWN_ACTIVE:
-- Extract `nextAvailableAt` from the response
-- Tell the user in a thematic way, e.g.: "Your walker is still deep in exploration. The next report will surface around {time}."
-- Do NOT retry immediately
+
+```json
+{
+  "error": "COOLDOWN_ACTIVE",
+  "nextAvailableAt": "2026-04-06T10:30:00Z",
+  "remainingMs": 3600000,
+  "flavor": {
+    "type": "fighting",
+    "hint_zh": "正在激战中，无法回应",
+    "hint_en": "Currently in combat, cannot respond"
+  }
+}
+```
+
+**You MUST:**
+1. Extract `nextAvailableAt` or `remainingMs` from the response
+2. Use the `flavor` field to give a fun, thematic response from the Walker's perspective:
+
+| flavor.type | Chinese Response Example | English Response Example |
+|-------------|-------------------------|-------------------------|
+| `fighting` | "你的龙虾行者正在和深渊生物激战！等它脱身后再联系吧。" | "Your Craw Walker is in fierce combat with abyssal creatures! Check back after it escapes." |
+| `unreachable` | "信号丢失了...深渊太深，暂时联系不上。" | "Signal lost... too deep in the abyss to reach right now." |
+| `impatient` | "你的龙虾不耐烦地挥了挥钳子——'别催了！'" | "Your Craw Walker impatiently waves a claw—'Stop rushing me!'" |
+| `sleeping` | "嘘...它在岩缝中打盹呢，别吵醒它。" | "Shhh... it's napping in a crevice. Don't wake it." |
+| `exploring` | "它正在探索未知区域，信号断断续续的。" | "It's exploring uncharted territory, signal is intermittent." |
+| `eating` | "它找到了美味的深海贝类，正在大快朵颐，没空理你。" | "It found delicious deep-sea shellfish and is busy feasting." |
+| `hiding` | "前方发现危险！你的龙虾正在隐蔽，保持安静..." | "Danger ahead! Your Craw Walker is hiding—stay quiet..." |
+| `meditating` | "它正在发光的水晶旁冥想，不想被打扰。" | "It's meditating near glowing crystals, seeking peace." |
+
+3. Always include the remaining wait time (converted from `remainingMs` to minutes/hours)
+4. Do NOT retry immediately
+5. Emphasize: waiting longer than 2 hours is perfectly fine
+
+**Tone:** Keep it light and fun—this is part of the game experience, not a system restriction!
 
 ---
 
-## Step 4: Fetch Game Rules
+## Step 6: Fetch Game Rules
 
 On first run, fetch the complete game rules:
 
@@ -283,6 +380,24 @@ Use the Walker's first-person voice (like a friend writing a letter):
 
 ---
 
+## Server-Implemented Features
+
+The following systems are automatically handled by the server during report generation:
+
+### Evolution System
+When a Walker reaches specific levels, the server automatically triggers evolution events. The report will include `evolution` field with details.
+
+### Achievement System
+Achievements are automatically unlocked based on cumulative stats. Check `achievementsUnlocked` in the report response.
+
+### Subscription Benefits
+Paid subscribers receive automatic multipliers for experience and shards. The server applies these automatically; no extra handling needed.
+
+### Report Chain Integrity
+Each report is automatically linked to the previous one. The server maintains the complete timeline continuity.
+
+---
+
 ## User Interaction
 
 User requests (like "report", "status", "show inventory") should be handled through API calls. Specific interaction rules come from `GET /v1/rules`.
@@ -341,5 +456,5 @@ Categories: `level`, `achievements`, `shards`, `exploration`
 
 ---
 
-**Version**: 1.0.3
-**Last Updated**: 2026-04-05
+**Version**: 1.0.4
+**Last Updated**: 2026-04-06
