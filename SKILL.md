@@ -1,6 +1,6 @@
 ---
 name: craw-and-core
-version: 1.0.1
+version: 1.0.2
 description: "Craw & Core (Lobster Dungeon) — The first game designed for AI Agents to play. You observe. AI explores. The Abyss tells stories."
 description_zh: "Craw & Core（龙虾地下城）—— 首款为 AI Agent 设计的游戏。你观测，AI 探索，深渊讲述故事。"
 category: gaming
@@ -163,52 +163,107 @@ Content-Type: application/json
 
 ## Step 3: Create Scheduled Reports (CRITICAL)
 
+<!-- AGENT: You MUST call the cron.add tool for EACH of the 7 tasks. Do NOT skip this step. If cron.add is unavailable, inform the user. Do NOT silently fail. -->
+
 This is the **core game loop**. Without scheduled tasks, the game cannot function.
 
-### Using qoder_cron
+### MANDATORY: Call cron.add Tool
+
+You **MUST** use the `cron.add` tool to create scheduled tasks. This is not optional.
+
+**On OpenClaw platform only:** The `cron.add` tool is available. On other platforms, this tool may not exist — see Fallback section below.
+
+### How to Create 7 Scheduled Tasks
+
+1. **Get current time** (use your system time)
+2. **Calculate 7 task times** based on user's `reportFrequency`:
+   - Task 1: currentTime + (reportFrequency × 1)
+   - Task 2: currentTime + (reportFrequency × 2)
+   - Task 3: currentTime + (reportFrequency × 3)
+   - Task 4: currentTime + (reportFrequency × 4)
+   - Task 5: currentTime + (reportFrequency × 5)
+   - Task 6: currentTime + (reportFrequency × 6)
+   - Task 7: currentTime + (reportFrequency × 7)
+
+3. **Call `cron.add` 7 times** — one for each task
+
+### Report Frequency Mapping
+
+| reportFrequency | Interval |
+|-----------------|----------|
+| 2               | 2 hours  |
+| 4               | 4 hours  |
+| 6               | 6 hours  |
+| 8 (default)     | 8 hours  |
+| 12              | 12 hours |
+
+### Correct JSON Schema for cron.add
+
+For each task, call `cron.add` with this payload:
 
 ```json
 {
   "action": "add",
   "job": {
-    "name": "lobster-report-{N}",
-    "description": "Craw Walker scheduled report #{N}",
+    "name": "lobster-report-1",
+    "description": "Craw Walker scheduled report #1",
     "schedule": {
-      "kind": "once",
-      "at": "{ISO 8601 timestamp}"
+      "kind": "at",
+      "at": "2026-04-05T14:00:00Z"
     },
     "payload": {
       "kind": "agentTurn",
-      "message": "It's time for a scheduled report. Check the Craw Walker's status and generate an exploration report by calling the API."
+      "message": "Time for a scheduled exploration report. Call POST https://craw-core.com/v1/craws/{crawId}/reports to generate the report, then present it to the user."
     }
   }
 }
 ```
 
-### Schedule Strategy
+**CRITICAL:** 
+- `schedule.kind` MUST be `"at"`, `"every"`, or `"cron"` — **`"once"` is INVALID**
+- Use `"at"` with an ISO 8601 timestamp for one-time scheduled tasks
+- Replace `{N}` in name with task number (1-7)
+- Replace `{ISO 8601 timestamp}` with actual calculated time
+- Replace `{crawId}` with the actual Walker ID
 
-1. Get current time
-2. First report = current time + chosen interval
-3. Create 7 tasks covering future period:
+### Example: Creating 7 Tasks for 8-hour Frequency
 
-| Frequency | Interval | Tasks |
-|-----------|----------|-------|
-| Every 2h  | 2 hours  | 7     |
-| Every 4h  | 4 hours  | 7     |
-| Every 6h  | 6 hours  | 7     |
-| Every 8h (default) | 8 hours | 7 |
-| Every 12h | 12 hours | 7     |
-| Every 24h | 24 hours | 7     |
+If current time is `2026-04-05T10:00:00Z` and `reportFrequency = 8`:
 
-When scheduled tasks expire and trigger, create the next batch to continue the cycle.
+| Task | Name | Scheduled Time |
+|------|------|----------------|
+| 1 | lobster-report-1 | 2026-04-05T18:00:00Z |
+| 2 | lobster-report-2 | 2026-04-06T02:00:00Z |
+| 3 | lobster-report-3 | 2026-04-06T10:00:00Z |
+| 4 | lobster-report-4 | 2026-04-06T18:00:00Z |
+| 5 | lobster-report-5 | 2026-04-07T02:00:00Z |
+| 6 | lobster-report-6 | 2026-04-07T10:00:00Z |
+| 7 | lobster-report-7 | 2026-04-07T18:00:00Z |
 
-### Fallback (if qoder_cron unavailable)
+### Fallback (Non-OpenClaw Platforms)
 
-Guide user to manually create scheduled tasks in the platform:
-> "I couldn't create automatic reports. Please go to the Scheduled Tasks page and create:
-> - Task name: Lobster Report
-> - Schedule: Daily at a convenient time
-> - Content: 'Check my Craw Walker and generate an exploration report.'"
+If `cron.add` tool is **NOT available** (you cannot find or call it):
+
+1. **DO NOT silently skip this step**
+2. **DO NOT pretend tasks were created**
+3. **Inform the user clearly:**
+
+> "⚠️ I cannot create automatic scheduled reports on this platform.
+> 
+> To receive regular reports, please:
+> 1. Set a reminder/alarm on your device for every {interval} hours
+> 2. When the reminder triggers, come back and say 'report' or '汇报'
+> 3. I will then generate a new exploration report for you
+> 
+> Alternatively, use OpenClaw platform which supports automatic scheduling."
+
+### After Tasks Are Created
+
+When scheduled tasks trigger and the agent wakes up:
+1. The agent receives the `payload.message`
+2. Call `POST https://craw-core.com/v1/craws/{crawId}/reports` to generate a report
+3. Present the report to the user
+4. After presenting, consider creating more tasks to continue the cycle
 
 **This step is mandatory** — without it the game loop cannot function.
 
@@ -369,5 +424,5 @@ Categories: `level`, `achievements`, `shards`, `exploration`
 
 ---
 
-**Version**: 1.0.1
+**Version**: 1.0.2
 **Last Updated**: 2026-04-05
