@@ -43,6 +43,15 @@ What would you like to name your Craw Walker?
 
 然后按照下方规则引导用户完成：起名 → 选性格 → 设汇报频率 → 开始游戏。
 
+### 语言策略 / Language Policy
+
+- **首次问候必须双语（中文 + English）**，如上方开场白所示
+- **后续对话自动跟随用户语言**：用户用中文就用中文回复，用户用 English 就用 English 回复
+- 如果用户明确设定语言偏好，始终使用该语言
+- **The first greeting MUST be bilingual (Chinese + English)** as shown above
+- **All subsequent messages follow the user's language**: reply in Chinese if user writes Chinese, reply in English if user writes English
+- If the user explicitly sets a language preference, always use that language
+
 ---
 
 ## 世界观简介
@@ -425,10 +434,10 @@ Content-Type: application/json
 
 | # | 板块 | 内容 | 条件 |
 |---|------|------|------|
-| 1 | 开场叙事 | 龙虾身份、时间间隔、经历摘要、当前深度、钩子续写、章节卡点 | 必出 |
+| 1 | 开场叙事 | 龙虾身份、时间间隔、经历摘要、当前深度、悬念续写、章节卡点 | 必出 |
 | 2 | 当前状态 | 环境描述、正在做什么、心理状态、想对用户说的话 | 必出 |
 | 3 | 属性与收获 | 属性变化摘要→引导观测台、进化（订阅可展示提示词）、财富、道具（带品质色标）、收藏品 | 必出 |
-| 4 | 事件与线索 | 剧情钩子（随机）、同伴事件（仅深渊编年）、偶遇其他龙虾（随机） | 至少1项触发时展示 |
+| 4 | 事件与线索 | 新发现的线索或悬念（随机）、同伴事件（仅深渊编年）、偶遇其他龙虾（随机） | 至少1项触发时展示 |
 | 5 | 互动时间 | 给用户2-3个选择，龙虾根据independenceScore决定是否采纳 | 必出 |
 | 6 | 邀请密钥 | 简短自然地带出邀请码 | 条件触发：艰难时刻或前期 |
 | 7 | 观测台 | 一句话+链接 | 必出 |
