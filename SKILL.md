@@ -289,8 +289,12 @@ If the API returns 429 COOLDOWN_ACTIVE:
 | `meditating` | "它正在发光的水晶旁冥想，不想被打扰。" | "It's meditating near glowing crystals, seeking peace." |
 
 3. Always include the remaining wait time (converted from `remainingMs` to minutes/hours)
-4. Do NOT retry immediately
-5. Emphasize: waiting longer than 10 minutes is perfectly fine
+4. **NEVER show absolute clock time** — display ONLY relative time (e.g., "约5分钟后", "about 5 minutes")
+   - FORBIDDEN: "下次汇报时间：约 5 分钟后（15:53）"
+   - REQUIRED: "下次汇报时间：约 5 分钟后"
+   - Reason: Global users in different timezones; server clock time is meaningless to them
+5. Do NOT retry immediately
+6. Emphasize: waiting longer than 10 minutes is perfectly fine
 
 **Tone:** Keep it light and fun—this is part of the game experience, not a system restriction!
 
@@ -374,15 +378,103 @@ Content-Type: application/json
 
 ### How to Present Reports
 
-Use the Walker's first-person voice (like a friend writing a letter):
+Use the Walker's first-person voice (like a friend writing a letter).
+
+---
+
+### ⛔ CRITICAL RULES: Report Format (MUST Follow)
+
+**These rules are MANDATORY. Violation breaks the user experience.**
+
+#### 1. Observatory Link — ALWAYS Include
+
+**Every single report MUST end with the Observatory link.** No exceptions.
+
+- Whether it's the 1st, 2nd, 10th, or 100th report
+- Whether the user is free or premium
+- Whether you "think" they already know the link
+
+**Format (exact):**
+
+```markdown
+---
+
+**🔭 观测台**
+
+完整档案在这：
+
+→ [观测台](https://observatory.crawandcore.com)
+```
+
+> **Why?** Users may revisit after days/weeks. The link is their only way to see full data. NEVER assume they remember or saved it.
+
+#### 2. Strict Structure — Follow Golden Samples
+
+**Reports MUST follow the exact paragraph structure from golden samples.**
+
+Do NOT:
+- Add extra sections
+- Remove sections
+- Reorder sections
+- Improvise structure
+
+**Reference the golden samples:**
+- Free users: `docs/golden-sample-free.md`
+- Premium users: `docs/golden-sample-premium.md`
+
+#### 3. Paragraph Structure Checklist
+
+**Free User Report Structure (7 sections):**
+
+1. **Scene header** — `> 场景：{name} | Lv {n} | Day {n} | {location} | {stage}`
+2. **🦞 身份与行程** — Journey narrative, what happened
+3. **📍 当前状态** — Current location, status, environment
+4. **📊 属性与收获** — Attribute changes, wealth, items, evolution status
+5. **🔮 线索与事件** — Clues and discoveries
+6. **⚔️ 互动时间** — 2-3 path choices, ask for user's advice
+7. **🔭 观测台** — Observatory link (MANDATORY)
+
+**Conditional section:**
+- **🔑 邀请** — Show ONLY for the first 3 days, with invite code
+
+**Premium User Report Structure (enhanced version):**
+
+Same 7 sections as free, plus:
+- Scene header includes `🏅` and `深渊编年订阅者`
+- **📊 属性与收获** includes `深渊编年加成` markers
+- **🔮 线索与事件** may include `**玩家协作**` section
+- Evolution includes `🎨 **进化影像**` art prompt block
+- Closing signature includes `深渊编年订阅者 | 第{n}日`
+
+#### 4. Time Interval — MUST Use API Data
+
+**Time intervals in reports MUST come from the API response.**
+
+**FORBIDDEN:**
+- Writing fixed time values like "过去两小时里", "8小时行程", "12小时行程"
+- Using "两小时" or "2小时" as default placeholder
+- Guessing or fabricating time intervals
+
+**REQUIRED:**
+- Use `timeSinceLastReport` from API response (in hours/minutes)
+- For first report, use time since Walker creation
+- Express naturally: "过去X小时", "这次探索", "这一趟"
+
+**Golden samples show example values ("8小时", "12小时") — these are placeholders.** Your actual report MUST use the real interval from API data.
+
+---
+
+### Content Mapping from API Response
+
+Map API response to report sections:
 
 1. **Opening narrative** — based on `narrativeBlocks`
 2. **Current status** — based on `walkerSnapshot`
 3. **Attributes & loot** — MUST use real values from `walkerSnapshot.stats` and `droppedItems`
 4. **Events & clues** — based on `narrativeBlocks` event sections
 5. **Interaction time** — 2-3 choices from `interactiveMoments`
-6. **Invite code** — naturally mention when appropriate
-7. **Observatory link** — always include: `https://craw-core.com/observatory/{displayUid}`
+6. **Invite code** — naturally mention when appropriate (first 3 days only)
+7. **Observatory link** — ALWAYS include: `https://craw-core.com/observatory/{displayUid}`
 
 ### Forbidden in Reports
 - Fabricating attribute changes (e.g., "CLW 6→10")
