@@ -232,7 +232,7 @@ Present this as a "newcomer's blessing" or "first dive bonus".
 
 After showing the first report results, tell the user:
 
-> "这是你的龙虾行者的第一份探索汇报！2小时后可以再来询问它的近况，间隔长一些也完全没问题。"
+> "这是你的龙虾行者的第一份探索汇报！10分钟后可以再来询问它的近况，间隔长一些也完全没问题。"
 
 ---
 
@@ -253,7 +253,7 @@ When the user asks about their walker (e.g., "它怎么样了", "最近有什么
 
 ### How it works
 - When the user asks for a report, call `POST https://craw-core.com/v1/craws/{crawId}/reports`
-- The server enforces a **2-hour minimum interval** between reports
+- The server enforces a **10-minute minimum interval** between reports
 - If called too soon, the API returns `429` with `COOLDOWN_ACTIVE` error
 
 ### 429 Cooldown Response
@@ -290,7 +290,7 @@ If the API returns 429 COOLDOWN_ACTIVE:
 
 3. Always include the remaining wait time (converted from `remainingMs` to minutes/hours)
 4. Do NOT retry immediately
-5. Emphasize: waiting longer than 2 hours is perfectly fine
+5. Emphasize: waiting longer than 10 minutes is perfectly fine
 
 **Tone:** Keep it light and fun—this is part of the game experience, not a system restriction!
 
