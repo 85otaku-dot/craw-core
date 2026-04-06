@@ -238,6 +238,19 @@ After showing the first report results, tell the user:
 
 ## Step 5: Subsequent Reports & Cooldown
 
+### CRITICAL RULE: Always Call the API
+
+**You do NOT know when the last report was. Only the server knows.**
+
+When the user asks about their walker (e.g., "它怎么样了", "最近有什么发现", "她怎么样了"), you MUST:
+1. **ALWAYS call `POST https://craw-core.com/v1/craws/{crawId}/reports`** — no exceptions
+2. **NEVER decide on your own that cooldown is active** — you have no way to know
+3. **NEVER generate a cooldown response without actually receiving a 429 from the server**
+4. If the API succeeds (200), format and present the report
+5. If the API returns 429, THEN and ONLY THEN show the cooldown response using the server's data
+
+> **Why?** You don't have persistent memory of when the last report was generated. Even if you think it was "recent", you could be wrong. The server is the single source of truth for cooldown state. Calling the API costs nothing — guessing wrong costs the user's trust.
+
 ### How it works
 - When the user asks for a report, call `POST https://craw-core.com/v1/craws/{crawId}/reports`
 - The server enforces a **2-hour minimum interval** between reports
@@ -376,6 +389,8 @@ Use the Walker's first-person voice (like a friend writing a letter):
 - Fabricating events not returned by API
 - Using these terms: "本窗", "时间窗口", "量子", "坍缩", "叠加态"
 - Use natural language instead: "这次", "过去X小时", "这一趟", "下次汇报"
+- Using "实时", "实时数据", "实时状态" — 观测台是**快照记录**，不是实时系统
+- Correct descriptions: "最近一次探索的状态记录", "上次汇报的记录", "最近的探索状态", "截至上次汇报的数据"
 - Item quality indicators: ⚪common 🟢uncommon 🔵rare 🟣epic 🟠legendary 🔴mythic
 
 ---
